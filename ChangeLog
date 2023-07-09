@@ -1,0 +1,11 @@
+commit b08782c2369fc1afd265c0d324d72eca896827af
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Sun Jul 9 18:22:00 2023 +0200
+
+    DirectFBGL implementation for PortableGL
+
+commit 93295d1101116be9631bbfc4940bf11bb2bae0f6
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Sun Jul 9 18:11:37 2023 +0200
+
+    Initial revision
