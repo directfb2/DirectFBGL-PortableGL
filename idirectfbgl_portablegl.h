@@ -16,6 +16,9 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
+#ifndef __IDIRECTFBGL_PORTABLEGL_H__
+#define __IDIRECTFBGL_PORTABLEGL_H__
+
 #include <directfbgl.h>
 #include <display/idirectfbsurface.h>
 #define  PORTABLEGL_IMPLEMENTATION
@@ -64,8 +67,11 @@ IDirectFBGL_PGL_Destruct( IDirectFBGL *thiz )
 
      D_DEBUG_AT( DFBGL_PGL, "%s( %p )\n", __FUNCTION__, thiz );
 
-     data->front->Release( data->front );
-     data->back->Release( data->back );
+     if (data->front)
+          data->front->Release( data->front );
+
+     if (data->back)
+          data->back->Release( data->back );
 
      free_glContext( &data->pglContext );
 
@@ -172,6 +178,7 @@ Construct( IDirectFBGL      *thiz,
      DFBResult              ret;
      int                    err;
      int                    width, height;
+     DFBSurfacePixelFormat  pixelformat;
      DFBSurfaceDescription  desc;
      IDirectFBSurface_data *surface_data;
      u32                   *buf = NULL;
@@ -184,6 +191,15 @@ Construct( IDirectFBGL      *thiz,
 
      surface->GetSize( surface, &width, &height );
 
+     surface->GetPixelFormat( surface, &pixelformat );
+
+     if (pixelformat == DSPF_RGB32) {
+         int pitch;
+
+         surface->Lock( surface, DSLF_WRITE, &buf, &pitch );
+         surface->Unlock( surface );
+     }
+
      err = init_glContext( &data->pglContext, &buf, width, height, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 );
      if (!err) {
           D_ERROR( "DirectFBGL/PGL: Failed to initialize glContext!\n" );
@@ -191,31 +207,33 @@ Construct( IDirectFBGL      *thiz,
           return DFB_FAILURE;
      }
 
-     desc.flags                 = DSDESC_PIXELFORMAT | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PREALLOCATED;
-     desc.pixelformat           = DSPF_RGB32;
-     desc.width                 = width;
-     desc.height                = height;
-     desc.preallocated[0].data  = buf;
-     desc.preallocated[0].pitch = width * 4;
+     if (pixelformat != DSPF_RGB32) {
+          desc.flags                 = DSDESC_PIXELFORMAT | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PREALLOCATED;
+          desc.pixelformat           = DSPF_RGB32;
+          desc.width                 = width;
+          desc.height                = height;
+          desc.preallocated[0].data  = buf;
+          desc.preallocated[0].pitch = width * 4;
 
-     ret = idirectfb->CreateSurface( idirectfb, &desc, &data->back );
-     if (ret) {
-          D_DERROR( ret, "DirectFBGL/PGL: Failed to create back surface!\n" );
-          goto error;
+          ret = idirectfb->CreateSurface( idirectfb, &desc, &data->back );
+          if (ret) {
+               D_DERROR( ret, "DirectFBGL/PGL: Failed to create back surface!\n" );
+               goto error;
+          }
+
+          ret = surface->GetSubSurface( surface, NULL, &data->front );
+          if (ret) {
+               D_DERROR( ret, "DirectFBGL/PGL: Failed to create front surface!\n" );
+               goto error;
+          }
+
+          surface_data = surface->priv;
+          if (!surface_data)
+               goto error;
+
+          surface_data->flip_func     = pgl_flip_func;
+          surface_data->flip_func_ctx = data;
      }
-
-     ret = surface->GetSubSurface(surface, NULL, &data->front);
-     if (ret) {
-          D_DERROR( ret, "DirectFBGL/PGL: Failed to create front surface!\n" );
-          goto error;
-     }
-
-     surface_data = surface->priv;
-     if (!surface_data)
-          goto error;
-
-     surface_data->flip_func     = pgl_flip_func;
-     surface_data->flip_func_ctx = data;
 
      thiz->AddRef         = IDirectFBGL_PGL_AddRef;
      thiz->Release        = IDirectFBGL_PGL_Release;
@@ -237,3 +255,5 @@ error:
 
      return ret;
 }
+
+#endif
