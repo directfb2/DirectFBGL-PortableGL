@@ -1,3 +1,24 @@
+commit 8214149ee5f1dcb4f3ae519a0a8386c61477cd56
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Sat Jul 15 17:29:40 2023 +0200
+
+    Render directly to surface buffer if surface format is DSPF_RGB32
+
+commit 674316920c103002aee2ddcba1da0f7b2016c0f3
+Merge: 93295d1 7ae189e
+Author: DirectFB2 <80045286+directfb2@users.noreply.github.com>
+Date:   Sun Jul 9 18:30:21 2023 +0200
+
+    Merge pull request #1 from caramelli/master
+    
+    DirectFBGL implementation for PortableGL
+
+commit 7ae189e1197fe00744987e2a2671f5bcec05f9b6
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Sun Jul 9 18:22:27 2023 +0200
+
+    Add ChangeLog
+
 commit b08782c2369fc1afd265c0d324d72eca896827af
 Author: Nicolas Caramelli <caramelli.devel@gmail.com>
 Date:   Sun Jul 9 18:22:00 2023 +0200
