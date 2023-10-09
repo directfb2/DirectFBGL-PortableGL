@@ -1,3 +1,24 @@
+commit 9ee352dff7c0fafef3612ed752c31db6b3129d0b
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Mon Oct 9 06:35:52 2023 +0200
+
+    Add support for DirectFBGL interface with version 2
+
+commit 68f9c2d0638c1f3d7328a5898d7fe58caa0ba870
+Merge: 6743169 c2efc5e
+Author: DirectFB2 <80045286+directfb2@users.noreply.github.com>
+Date:   Sat Jul 15 17:34:06 2023 +0200
+
+    Merge pull request #2 from caramelli/master
+    
+    Render directly to surface buffer if surface format is DSPF_RGB32
+
+commit c2efc5e0f8783fd8876a6036f045c41755dbff26
+Author: Nicolas Caramelli <caramelli.devel@gmail.com>
+Date:   Sat Jul 15 17:30:10 2023 +0200
+
+    Update ChangeLog
+
 commit 8214149ee5f1dcb4f3ae519a0a8386c61477cd56
 Author: Nicolas Caramelli <caramelli.devel@gmail.com>
 Date:   Sat Jul 15 17:29:40 2023 +0200

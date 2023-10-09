@@ -39,12 +39,14 @@ DIRECT_INTERFACE_IMPLEMENTATION( IDirectFBGL, PGL )
 /**********************************************************************************************************************/
 
 typedef struct {
-     int               ref;        /* reference counter */
+     int                     ref;        /* reference counter */
 
-     glContext         pglContext;
+     glContext               pglContext;
 
-     IDirectFBSurface *back;
-     IDirectFBSurface *front;
+     IDirectFBSurface       *back;
+     IDirectFBSurface       *front;
+
+     DFBSurfaceCapabilities  caps;
 } IDirectFBGL_PGL_data;
 
 static DFBResult
@@ -162,6 +164,24 @@ IDirectFBGL_PGL_GetProcAddress( IDirectFBGL  *thiz,
      return DFB_FAILURE;
 }
 
+#if DIRECTFBGL_INTERFACE_VERSION > 1
+static DFBResult
+IDirectFBGL_PGL_SwapBuffers( IDirectFBGL *thiz )
+{
+     DIRECT_INTERFACE_GET_DATA( IDirectFBGL_PGL );
+
+     D_DEBUG_AT( DFBGL_PGL, "%s( %p )\n", __FUNCTION__, thiz );
+
+     if (!(data->caps & DSCAPS_GL) ||
+         !(data->back && data->front))
+          return DFB_OK;
+
+     data->front->Blit( data->front, data->back, NULL, 0, 0 );
+
+     return DFB_OK;
+}
+#endif
+
 /**********************************************************************************************************************/
 
 static DFBResult
@@ -196,7 +216,7 @@ Construct( IDirectFBGL      *thiz,
      if (pixelformat == DSPF_RGB32) {
          int pitch;
 
-         surface->Lock( surface, DSLF_WRITE, &buf, &pitch );
+         surface->Lock( surface, DSLF_WRITE, (void**) &buf, &pitch );
          surface->Unlock( surface );
      }
 
@@ -221,18 +241,32 @@ Construct( IDirectFBGL      *thiz,
                goto error;
           }
 
-          ret = surface->GetSubSurface( surface, NULL, &data->front );
+          ret = surface->GetCapabilities( surface, &data->caps );
           if (ret) {
-               D_DERROR( ret, "DirectFBGL/PGL: Failed to create front surface!\n" );
+               D_DERROR( ret, "DirectFBGL/PGL: Failed to get surface capabilities!\n" );
                goto error;
           }
 
-          surface_data = surface->priv;
-          if (!surface_data)
-               goto error;
+          if (data->caps & DSCAPS_GL) {
+               data->front = surface;
+               surface->AddRef( surface );
+          }
+          else {
+               ret = surface->GetSubSurface( surface, NULL, &data->front );
+               if (ret) {
+                    D_DERROR( ret, "DirectFBGL/PGL: Failed to create front surface!\n" );
+                    goto error;
+               }
 
-          surface_data->flip_func     = pgl_flip_func;
-          surface_data->flip_func_ctx = data;
+               surface_data = surface->priv;
+               if (!surface_data) {
+                    ret = DFB_DEAD;
+                    goto error;
+               }
+
+               surface_data->flip_func     = pgl_flip_func;
+               surface_data->flip_func_ctx = data;
+          }
      }
 
      thiz->AddRef         = IDirectFBGL_PGL_AddRef;
@@ -241,6 +275,9 @@ Construct( IDirectFBGL      *thiz,
      thiz->Unlock         = IDirectFBGL_PGL_Unlock;
      thiz->GetAttributes  = IDirectFBGL_PGL_GetAttributes;
      thiz->GetProcAddress = IDirectFBGL_PGL_GetProcAddress;
+#if DIRECTFBGL_INTERFACE_VERSION > 1
+     thiz->SwapBuffers    = IDirectFBGL_PGL_SwapBuffers;
+#endif
 
      return DFB_OK;
 
